@@ -1,4 +1,5 @@
 ﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System.Text;
 
 namespace DirctExchange.Producer
@@ -16,7 +17,7 @@ namespace DirctExchange.Producer
             await using var connection = await factory.CreateConnectionAsync();
             await using var channel = await connection.CreateChannelAsync();
 
-            // amq.direct Exchange موجود مسبقًا → لا تعلن عنه
+            // الرسالة
             var severity = args.Length > 0 ? args[0] : "key-notification";
             var message = args.Length > 1
                 ? string.Join(" ", args.Skip(1))
@@ -24,14 +25,64 @@ namespace DirctExchange.Producer
 
             var body = Encoding.UTF8.GetBytes(message);
 
+            // 1️⃣ إرسال Direct
             await channel.BasicPublishAsync(
                 exchange: "amq.direct",
                 routingKey: severity,
                 body: body
             );
+            Console.WriteLine($" [x] Sent Direct '{severity}':'{message}'");
 
-            Console.WriteLine($" [x] Sent '{severity}':'{message}'");
-            Console.ReadLine();
+            // 2️⃣ إرسال Fanout
+            await channel.BasicPublishAsync(
+                exchange: "amq.fanout",
+                routingKey: string.Empty,
+                body: body
+            );
+            Console.WriteLine($" [x] Sent to Fanout: '{message}'");
+
+            // ========================
+            // Example: Consumer for Fanout Queues
+            // ========================
+            string[] fanoutQueues = { "q.fanout1", "q.fanout2", "q.fanout3", "q.fanout4", "q.fanout5" };
+
+            foreach (var queueName in fanoutQueues)
+            {
+                // Declare each queue
+                await channel.QueueDeclareAsync(
+                    queue: queueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false
+                );
+
+                // Bind to fanout exchange
+                await channel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: "amq.fanout",
+                    routingKey: string.Empty
+                );
+
+                // Consumer
+                var consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.ReceivedAsync += async (model, ea) =>
+                {
+                    var bodyReceived = ea.Body.ToArray();
+                    var msgReceived = Encoding.UTF8.GetString(bodyReceived);
+                    Console.WriteLine($" [x] {queueName} Received: '{msgReceived}'");
+                    await Task.CompletedTask;
+                };
+
+                await channel.BasicConsumeAsync(
+                    queue: queueName,
+                    autoAck: true,
+                    consumer: consumer
+                );
+            }
+
+            // Keep running
+            Console.WriteLine("Press CTRL+C to exit.");
+            await Task.Delay(Timeout.Infinite);
         }
     }
 }

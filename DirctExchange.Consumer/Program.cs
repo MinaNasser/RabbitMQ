@@ -20,7 +20,7 @@ namespace DirctExchange.Consumer
             // اسم Queue ثابت
             var queueName = "qu-notification";
 
-            // Declare Queue (لازم)
+            // Declare Queue
             await channel.QueueDeclareAsync(
                 queue: queueName,
                 durable: true,
@@ -28,12 +28,13 @@ namespace DirctExchange.Consumer
                 autoDelete: false
             );
 
-            // لو مفيش routing-key ابقى استخدم default
+            // =========================
+            // Direct Exchange (amq.direct)
+            // =========================
             var routingKeys = args.Length == 0
                 ? new[] { "key-notification" }
                 : args;
 
-            // Bind على amq.direct
             foreach (var routingKey in routingKeys)
             {
                 await channel.QueueBindAsync(
@@ -43,8 +44,19 @@ namespace DirctExchange.Consumer
                 );
             }
 
-            Console.WriteLine(" [*] Waiting for messages. To exit press CTRL+C");
+            // =========================
+            // Fanout Exchange (amq.fanout)
+            // =========================
+            // Fanout ما بياخدش routing key
+            await channel.QueueBindAsync(
+                queue: queueName,
+                exchange: "amq.fanout",
+                routingKey: string.Empty
+            );
 
+            Console.WriteLine(" [*] Waiting for messages (Direct + Fanout). To exit press CTRL+C");
+
+            // Consumer
             var consumer = new AsyncEventingBasicConsumer(channel);
 
             consumer.ReceivedAsync += async (model, ea) =>
