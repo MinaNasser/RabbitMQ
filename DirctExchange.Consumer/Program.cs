@@ -77,29 +77,87 @@ namespace DirctExchange.Consumer
 
             //await Task.Delay(Timeout.Infinite);
 
+            //var factory = new ConnectionFactory
+            //{
+            //    HostName = "localhost"
+            //};
+            //await using var connection = await factory.CreateConnectionAsync();
+            //await using var channel = await connection.CreateChannelAsync();
+            //Console.WriteLine("Connection established.");
+            //var consumer = new AsyncEventingBasicConsumer(channel);
+            //consumer.ReceivedAsync += async (model, ea) =>
+            //{
+            //    var body = ea.Body.ToArray();
+            //    var message = Encoding.UTF8.GetString(body);
+            //    Console.WriteLine($" [x] Received '{ea.RoutingKey}':'{message}'");
+            //    await Task.CompletedTask;
+            //};
+            //channel.BasicConsumeAsync(
+            //    queue: "q.health3",
+            //    autoAck: true,
+            //    consumer: consumer
+            //);
+            //Console.WriteLine("Press [Enter] to  Exit .");
+            //Console.ReadLine();
+
             var factory = new ConnectionFactory
             {
                 HostName = "localhost"
             };
+
             await using var connection = await factory.CreateConnectionAsync();
             await using var channel = await connection.CreateChannelAsync();
+
             Console.WriteLine("Connection established.");
+
+            // 1️⃣ Declare Queue
+            var queueName = "q.header1";
+
+            await channel.QueueDeclareAsync(
+                queue: queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false
+            );
+
+
+            // 2️⃣ Bind Queue to Headers Exchange
+            await channel.QueueBindAsync(
+                queue: queueName,
+                exchange: "amq.headers",
+                routingKey: string.Empty,
+                arguments: new Dictionary<string, object>
+                {
+                { "name", "info" },
+                { "x-match", "all" } 
+                }
+            );
+
+            Console.WriteLine("Queue declared & bound to headers exchange.");
+
+            // 3️⃣ Create Consumer
             var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += async (model, ea) =>
+
+            consumer.ReceivedAsync += async (sender, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-                Console.WriteLine($" [x] Received '{ea.RoutingKey}':'{message}'");
+
+                Console.WriteLine($" [x] Received: {message}");
+
                 await Task.CompletedTask;
             };
-            channel.BasicConsumeAsync(
-                queue: "q.health3",
+
+            // 4️⃣ Consume from Queue
+            await channel.BasicConsumeAsync(
+                queue: queueName,
                 autoAck: true,
                 consumer: consumer
             );
-            Console.WriteLine("Press [Enter] to  Exit .");
-            Console.ReadLine();
 
+            Console.WriteLine("Waiting for messages...");
+            Console.WriteLine("Press [Enter] to Exit.");
+            Console.ReadLine();
 
         }
     }

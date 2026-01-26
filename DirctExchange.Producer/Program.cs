@@ -85,23 +85,58 @@ namespace DirctExchange.Producer
             //await Task.Delay(Timeout.Infinite);
 
 
+            //var factory = new ConnectionFactory
+            //{
+            //    HostName = "localhost"
+            //};
+            //await using var connection = await factory.CreateConnectionAsync();
+            //await using var channel = await connection.CreateChannelAsync();
+            //Console.WriteLine("Connection established.");
+            //const string message = "Test Topic Exchange ";
+            //var body = Encoding.UTF8.GetBytes(message);
+            //await channel.BasicPublishAsync(
+            //    exchange: "amq.topic",
+            //    routingKey: "h.y",
+            //    body: body
+            //);
+            //Console.WriteLine($" [x] Sent Topic '{message}'");
+            //Console.WriteLine($"Press [Enter ] to Exit .");
+            //Console.ReadLine();
+
             var factory = new ConnectionFactory
             {
                 HostName = "localhost"
             };
+
             await using var connection = await factory.CreateConnectionAsync();
             await using var channel = await connection.CreateChannelAsync();
+
             Console.WriteLine("Connection established.");
-            const string message = "Test Topic Exchange ";
+
+            var properties = new BasicProperties
+            {
+                Persistent = false,
+                Headers = new Dictionary<string, object>
+                {
+                    { "name", "info" }
+                }
+            };
+
+            const string message = "Test Headers Exchange";
             var body = Encoding.UTF8.GetBytes(message);
+
             await channel.BasicPublishAsync(
-                exchange: "amq.topic",
-                routingKey: "h.y",
+                exchange: "amq.headers",
+                routingKey: string.Empty,
+                mandatory: false,
+                basicProperties: properties,
                 body: body
             );
-            Console.WriteLine($" [x] Sent Topic '{message}'");
-            Console.WriteLine($"Press [Enter ] to Exit .");
+
+            Console.WriteLine($" [x] Sent Headers '{message}'");
+            Console.WriteLine("Press [Enter] to Exit.");
             Console.ReadLine();
+
         }
     }
 }
