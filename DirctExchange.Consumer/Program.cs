@@ -158,6 +158,7 @@ namespace DirctExchange.Consumer
             Console.WriteLine("Waiting for messages...");
             Console.WriteLine("Press [Enter] to Exit.");
             Console.ReadLine();
+            //Auto Expird
 
         }
     }
