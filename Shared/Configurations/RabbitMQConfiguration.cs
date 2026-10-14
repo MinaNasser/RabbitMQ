@@ -10,6 +10,6 @@ namespace Shared.Configurations
         public string Password { get; set; } = string.Empty;
         public string QueueName { get; set; } = string.Empty;
         public string VirtualHost { get; set; } = "myapp";
-
+        public string ExchangeName { get; set; }
     }
 }

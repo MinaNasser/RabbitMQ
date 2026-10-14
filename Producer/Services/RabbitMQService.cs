@@ -26,36 +26,32 @@ namespace Producer.Services
             };
         }
 
-        public async Task PublishMessageAsync(CompetingConsumersMessage message)
+        public async Task PublishMessageAsync(FirstDemoMessage message)
         {
             await OpenConnectionAndPublishAsync(message);
         }
 
-        private async Task OpenConnectionAndPublishAsync(CompetingConsumersMessage message)
+        private async Task OpenConnectionAndPublishAsync(FirstDemoMessage message)
         {
             await using var connection =
                 await _connectionFactory.CreateConnectionAsync();
 
             await using var channel =
                 await connection.CreateChannelAsync();
+            await channel.ExchangeDeclareAsync(
+                exchange: _rabbitMQConfiguration.ExchangeName,
+                type: ExchangeType.Fanout,
+                durable: true,
+                autoDelete: false,
+                arguments: null);
 
-            await channel.QueueDeclareAsync(
-                 queue: _rabbitMQConfiguration.QueueName,
-                 durable: true,
-                 exclusive: false,
-                 autoDelete: false,
-                 arguments: null);
+            var body = JsonSerializer.SerializeToUtf8Bytes(message);
 
-            for (int i = 0; i < 10; i++)
-            {
-                message.Id = i + 1;
-                var body = JsonSerializer.SerializeToUtf8Bytes(message);
+            await channel.BasicPublishAsync(
+                exchange: _rabbitMQConfiguration.ExchangeName,
+                routingKey: "",
+                body: body);
 
-                await channel.BasicPublishAsync(
-                    exchange: string.Empty,
-                    routingKey: _rabbitMQConfiguration.QueueName,
-                    body: body);
-            }
         }
     }
 }

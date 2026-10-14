@@ -4,6 +4,6 @@ namespace Producer.Services
 {
     public interface IRabbitMQService
     {
-        Task PublishMessageAsync(CompetingConsumersMessage message);
+        Task PublishMessageAsync(FirstDemoMessage message);
     }
 }
