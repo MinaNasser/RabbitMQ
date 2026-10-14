@@ -11,7 +11,7 @@ namespace Producer.Controllers
         private readonly IRabbitMQService _rabbitMQService = rabbitMQService;
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendMessage([FromBody] FistDemoMessage fistDemo)
+        public async Task<IActionResult> SendMessage([FromBody] CompetingConsumersMessage fistDemo)
         {
             try
             {

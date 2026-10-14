@@ -1,6 +1,7 @@
 ﻿
 using RabbitMQ.Client;
 using Shared.Configurations;
+using Shared.Messages;
 using System.Text.Json;
 
 namespace Producer.Services
@@ -25,12 +26,12 @@ namespace Producer.Services
             };
         }
 
-        public async Task PublishMessageAsync<T>(T message)
+        public async Task PublishMessageAsync(CompetingConsumersMessage message)
         {
             await OpenConnectionAndPublishAsync(message);
         }
 
-        private async Task OpenConnectionAndPublishAsync<T>(T message)
+        private async Task OpenConnectionAndPublishAsync(CompetingConsumersMessage message)
         {
             await using var connection =
                 await _connectionFactory.CreateConnectionAsync();
@@ -45,12 +46,16 @@ namespace Producer.Services
                  autoDelete: false,
                  arguments: null);
 
-            var body = JsonSerializer.SerializeToUtf8Bytes(message);
+            for (int i = 0; i < 10; i++)
+            {
+                message.Id = i + 1;
+                var body = JsonSerializer.SerializeToUtf8Bytes(message);
 
-            await channel.BasicPublishAsync(
-                exchange: string.Empty,
-                routingKey: _rabbitMQConfiguration.QueueName,
-                body: body);
+                await channel.BasicPublishAsync(
+                    exchange: string.Empty,
+                    routingKey: _rabbitMQConfiguration.QueueName,
+                    body: body);
+            }
         }
     }
 }
