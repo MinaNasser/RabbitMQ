@@ -1,9 +1,7 @@
-﻿using Shared.Messages;
-
-namespace Producer.Services
+﻿namespace Producer.Services
 {
     public interface IRabbitMQService
     {
-        Task PublishMessageAsync(CompetingConsumersMessage message);
+        Task PublishMessageAsync<T>(T message);
     }
 }
