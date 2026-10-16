@@ -11,12 +11,12 @@ namespace Producer.Controllers
         private readonly IRabbitMQService _rabbitMQService = rabbitMQService;
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendMessage([FromBody] FirstDemoMessage fistDemo)
+        public async Task<IActionResult> SendMessage([FromBody] FirstDemoMessage fistDemo, [FromQuery] string routingKey)
         {
             try
             {
 
-                await _rabbitMQService.PublishMessageAsync(fistDemo);
+                await _rabbitMQService.PublishMessageAsync(fistDemo, routingKey);
                 return Ok("Message sent to RabbitMQ");
             }
             catch (Exception ex)

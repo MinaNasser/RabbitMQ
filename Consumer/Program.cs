@@ -48,7 +48,8 @@ namespace Consumer
 
             await channel.ExchangeDeclareAsync(
              exchange: rabbitMQConfig.ExchangeName,
-             type: ExchangeType.Fanout,
+             //type: ExchangeType.Fanout,
+             type: ExchangeType.Direct,
              durable: true,
              autoDelete: false,
              arguments: null);
@@ -60,7 +61,10 @@ namespace Consumer
             await channel.QueueBindAsync(
                 queue: queueName,
                 exchange: rabbitMQConfig.ExchangeName,
-                routingKey: "");
+                //routingKey: ""
+                routingKey: rabbitMQConfig.RoutingKey
+
+                );
             var consumer = new AsyncEventingBasicConsumer(channel);
 
             consumer.ReceivedAsync += async (_, eventArgs) =>

@@ -8,8 +8,9 @@ namespace Shared.Configurations
         public int Port { get; set; } = 5672;
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string QueueName { get; set; } = string.Empty;
+        //public string QueueName { get; set; } = string.Empty;
         public string VirtualHost { get; set; } = "myapp";
         public string ExchangeName { get; set; }
+        public string RoutingKey { get; set; } = string.Empty;
     }
 }

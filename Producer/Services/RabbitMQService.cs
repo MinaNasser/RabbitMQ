@@ -26,12 +26,12 @@ namespace Producer.Services
             };
         }
 
-        public async Task PublishMessageAsync(FirstDemoMessage message)
+        public async Task PublishMessageAsync(FirstDemoMessage message, string routingKey)
         {
-            await OpenConnectionAndPublishAsync(message);
+            await OpenConnectionAndPublishAsync(message, routingKey);
         }
 
-        private async Task OpenConnectionAndPublishAsync(FirstDemoMessage message)
+        private async Task OpenConnectionAndPublishAsync(FirstDemoMessage message, string routingKey)
         {
             await using var connection =
                 await _connectionFactory.CreateConnectionAsync();
@@ -40,7 +40,8 @@ namespace Producer.Services
                 await connection.CreateChannelAsync();
             await channel.ExchangeDeclareAsync(
                 exchange: _rabbitMQConfiguration.ExchangeName,
-                type: ExchangeType.Fanout,
+                //type: ExchangeType.Fanout,
+                type: ExchangeType.Direct,
                 durable: true,
                 autoDelete: false,
                 arguments: null);
@@ -49,7 +50,8 @@ namespace Producer.Services
 
             await channel.BasicPublishAsync(
                 exchange: _rabbitMQConfiguration.ExchangeName,
-                routingKey: "",
+                //routingKey: "",
+                routingKey: routingKey,
                 body: body);
 
         }
